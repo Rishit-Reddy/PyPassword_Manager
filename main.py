@@ -4,6 +4,7 @@ from tkinter import messagebox
 import os
 from random import choice, randint, shuffle
 import pyperclip
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -28,19 +29,58 @@ def save_password():
     email = email_entry.get()
     password = password_entry.get()
     
-    path = 'passwords.txt'
-    if not os.path.exists(path):
-        with open(path, 'w') as f:
-            pass 
+    data_format = {
+        web : {
+            "Email":email,
+            "Password":password,
+        }
+    }
     
+    path = 'passwords.json'
+        
     if web == "" or email == "" or password == "":
         messagebox.showerror(title="Enter Details", message="You have entered nothing, enter something!")
     else:
-        with open(path, 'a') as f:
-            f.write(f"{web} | {email} | {password}\n")
+        # with open(path, 'a') as f:
+        #     f.write(f"{web} | {email} | {password}\n")
+        #     
+        try:
+            with open(path, 'r') as f:
+                read_data = json.load()
+        except FileNotFoundError:
+            with open(path, mode="w") as f:
+                json.dump(data_format, f, indent=2)
+        else:
+            read_data.update(data_format)
+            with open(path, "w") as f:
+                f.dump(read_data, f, indent=2)
+            messagebox.showinfo(title="Successful", message="Details added")
+        finally:
             web_entry.delete(0, END)
             password_entry.delete(0, END)    
-        messagebox.showinfo(title="Successful", message="Details added")
+            
+
+#----------------------------Search Password ------------------------#
+def search_password():
+    
+    website = web_entry.get()
+    path = 'passwords.json'
+    
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        messagebox.showerror(title="Error", message="File Not Found!, Please add a password")
+    else:
+        if website in data:
+            email = data[website]["Email"]
+            password = data[website]["Password"]
+            msg = f"Email:{email}\nPassword:{password}"
+            messagebox.showinfo(title="Success", message=msg)
+            web_entry.delete(0, END)
+            password_entry.delete(0, END)
+        else:
+            messagebox.showerror(title="Error", message="Website Not Found!, Please add a password")
     
 # ---------------------------- UI SETUP ------------------------------- #
 
@@ -79,5 +119,7 @@ pass_button.grid(row=3, column=2)
 
 add_button = Button(text="Add", width=36, command=save_password)
 add_button.grid(row=4, column=1, columnspan=2)
-
+#search btn
+search = Button(text="Search", width=36, command=search_password)
+search.grid(row=5, column=1, columnspan=2)
 window.mainloop()
